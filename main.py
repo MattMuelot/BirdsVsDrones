@@ -1,3 +1,7 @@
+"""SPECIAL NOTE: Im aware to more experienced programmers that there are probably much better ways to handle a
+lot of the things I'm working on here, but its a learning experience. Any advice is welcome, please fork and
+create a pull request if you see anything that can be changed that you think would be beneficial"""
+
 import pygame
 import os
 import random
