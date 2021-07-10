@@ -65,7 +65,7 @@ class Enemy:
         self.update_rect()
         # pygame.draw.rect(s, (255, 0, 0), self.rect, 2) # Un-comment for hit-box viewing
         s.blit(self.img, (self.x, self.y))
-        if self.x < -50:
+        if self.x < -100:
             return True
 
     def update_rect(self):
@@ -81,8 +81,6 @@ class Egg(Enemy):
         self.x = random.randint(1000, 3000)
         self.y = random.randint(0, 400)
         self.vel = -2
-        self.collected = False  # If our Bird object comes into contact with egg, its collected status becomes True
-        self.dropped = False  # If our Bird object drops the egg, this becomes True
         self.rect = pygame.Rect(self.x + 15, self.y + 7, 70, 87)  # Manually edited hit-box to be as perfect as possible
         self.img = pygame.image.load('Assets/egg.png').convert_alpha()
 
@@ -92,23 +90,12 @@ class Egg(Enemy):
 
     def move_item(self, s, b):
         """This method is a work in progress, do not change anything without approval"""
-        if self.collected is False:
-            self.x -= 2
-            self.update_rect()
-            # pygame.draw.rect(s, (255, 0, 0), self.rect, 2)  # Uncomment to view hit-box
-            s.blit(self.img, (self.x, self.y))
-            if self.x < 50:
-                return True
-        if self.collected:
-            if self.dropped is False:
-                self.x, self.y = b.x, b.y + 60
-                self.update_rect()
-                s.blit(self.img, (self.x, self.y))
-            else:
-                # b.slot = False
-                self.y += 10
-                self.update_rect()
-                s.blit(self.img, (self.x, self.y))
+        self.x -= 2
+        self.update_rect()
+        # pygame.draw.rect(s, (255, 0, 0), self.rect, 2)  # Uncomment to view hit-box
+        s.blit(self.img, (self.x, self.y))
+        if self.x < -100:
+            return True
 
 
 class Birb:
@@ -118,7 +105,6 @@ class Birb:
         self.x = 50
         self.y = 300
         self.vel = 10
-        self.slot = False  # Our birb can only hold one egg at a time, if it is currently holding an egg, slot is True
         self.rect = pygame.Rect(self.x, self.y, 100, 100)
         self.bullets = []
         self.score = 0
@@ -216,43 +202,39 @@ while running:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 birb.shoot_bullets()
-    # for e in enemies[:]:
-    #     result = e.move_item(screen)
-    #     shot_result = birb.collision_detect(e)
-    #     crash_result = birb.crash_detection(e)
-    #     if shot_result:
-    #         try:
-    #             enemies.remove(e)
-    #             plink.play()
-    #         except ValueError:
-    #             pass
-    #     if result:
-    #         enemies.remove(e)
-    #     if crash_result:
-    #         try:
-    #             enemies.remove(e)
-    #             squawk.play()
-    #             birb.lives -= 1
-    #         except ValueError:
-    #             pass
-    # if len(enemies) <= 0:
-    #     enemies = [Enemy() for _ in range(30)]
-    """Goes through each egg object and runs specific checks, I know this looks confusing but hopefully when im
-    done it will be a lot less confusing"""
-    for p in eggs[:]:
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_m]:
-            if birb.slot is False:
+    for e in enemies[:]:
+        result = e.move_item(screen, birb)
+        shot_result = birb.bullet_detect(e)
+        crash_result = birb.crash_detection(e, birb)
+        if shot_result:
+            try:
+                enemies.remove(e)
+                plink.play()
+            except ValueError:
                 pass
-            else:
-                p.dropped = True
-                birb.slot = False
-        crash_result = birb.crash_detection(p, birb)  # Checks to see if our birb is colliding with the egg
+        if result:
+            enemies.remove(e)
         if crash_result:
-            if birb.slot is False:  # Checks to see if slot is not filled
-                p.collected = True  # Sets egg object collected to True
-                birb.slot = True  # Sets our slot to True (meaning the slot is filled and we cant collect any more eggs)
-        p.move_item(screen, birb)
+            try:
+                enemies.remove(e)
+                squawk.play()
+                birb.lives -= 1
+            except ValueError:
+                pass
+    if len(enemies) <= 0:
+        enemies = [Enemy() for _ in range(30)]
+    for e in eggs[:]:
+        crash_result = birb.crash_detection(e, birb)  # Checks to see if our birb is colliding with the egg
+        if crash_result:
+            eggs.remove(e)
+            chirp.play()
+        shot_result = birb.bullet_detect(e)
+        if shot_result:
+            eggs.remove(e)
+            crack.play()
+        off_screen = e.move_item(screen, birb)
+        if off_screen:
+            eggs.remove(e)
     if len(eggs) <= 0:  # If all eggs are either destroyed, or off-screen, regenerate list of eggs
         eggs = [Egg() for _ in range(6)]
     birb.move_bullets(screen)
