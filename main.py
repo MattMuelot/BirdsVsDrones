@@ -57,6 +57,7 @@ class Power(Enemy):
         self.y = random.randint(0, 400)
         self.vel = -2
         self.collected = False
+        self.dropped = False
         self.rect = pygame.Rect(self.x + 15, self.y + 7, 70, 87)
         self.img = pygame.image.load('Assets/egg.png').convert_alpha()
 
@@ -71,11 +72,16 @@ class Power(Enemy):
             s.blit(self.img, (self.x, self.y))
             if self.x < 50:
                 return True
-        else:
-            self.x, self.y = b.x, b.y + 60
-            b.slot = True
-            self.update_rect()
-            s.blit(self.img, (self.x, self.y))
+        if self.collected:
+            if self.dropped is False:
+                self.x, self.y = b.x, b.y + 60
+                self.update_rect()
+                s.blit(self.img, (self.x, self.y))
+            else:
+                # b.slot = False
+                self.y += 10
+                self.update_rect()
+                s.blit(self.img, (self.x, self.y))
 
 
 class Birb:
@@ -112,7 +118,7 @@ class Birb:
                 self.bullets.remove(b)
                 return True
 
-    def crash_detection(self, item):
+    def crash_detection(self, item, b):
         if self.rect.colliderect(item.rect):
             return True
 
@@ -185,33 +191,20 @@ while running:
     # if len(enemies) <= 0:
     #     enemies = [Enemy() for _ in range(30)]
     for p in eggs[:]:
-        result = p.move_item(screen, birb)
-        crash_result = birb.crash_detection(p)
-        shoot_result = birb.collision_detect(p)
-        if result:
-            try:
-                eggs.remove(p)
-            except ValueError:
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_m]:
+            if birb.slot is False:
                 pass
+            else:
+                p.dropped = True
+                birb.slot = False
+        crash_result = birb.crash_detection(p, birb)
         if crash_result:
-            try:
-                if p.collected is True:
-                    p.move_item(screen, birb)
-                    p.update_rect()
-                else:
-                    if birb.slot is False:
-                        chirp.play()
-                        p.collected = True
-                    else:
-                        pass
-            except ValueError:
-                pass
-        if shoot_result:
-            try:
-                crack.play()
-                eggs.remove(p)
-            except ValueError:
-                pass
+            if birb.slot is False:
+                p.collected = True
+                birb.slot = True
+        print(birb.slot)
+        p.move_item(screen, birb)
     if len(eggs) <= 0:
         eggs = [Power() for _ in range(6)]
     birb.move_bullets(screen)
