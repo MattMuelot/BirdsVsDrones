@@ -4,7 +4,7 @@ import random
 
 pygame.init()
 screen = pygame.display.set_mode((900, 800))
-bg = pygame.image.load('Assets/sand1.png').convert_alpha()
+bg = pygame.image.load('Assets/hillbg.png').convert_alpha()
 seed = pygame.image.load('Assets/seed.png').convert_alpha()
 pygame.mixer.init()
 pygame.mixer.set_num_channels(16)
@@ -21,7 +21,7 @@ class Bullet:
         self.img = pygame.image.load('Assets/seed.png').convert_alpha()
         self.x = x
         self.y = y
-        self.vel = 10
+        self.vel = 20
         self.bullet_rect = pygame.Rect(self.x, self.y, 10, 10)
 
     def off_screen(self):
@@ -38,7 +38,7 @@ class Enemy:
         self.rect = pygame.Rect(self.x, self.y + 20, 100, 60)
         self.friendly = False
 
-    def move_item(self, s):
+    def move_item(self, s, b):
         self.x -= self.vel
         self.update_rect()
         # pygame.draw.rect(s, (255, 0, 0), self.rect, 2)
@@ -54,20 +54,34 @@ class Power(Enemy):
     def __init__(self):
         super().__init__()
         self.x = random.randint(1000, 3000)
-        self.vel = 5
+        self.y = random.randint(0, 400)
+        self.vel = -2
+        self.collected = False
+        self.dropped = False
         self.rect = pygame.Rect(self.x + 15, self.y + 7, 70, 87)
         self.img = pygame.image.load('Assets/egg.png').convert_alpha()
 
     def update_rect(self):
         self.rect = pygame.Rect(self.x + 15, self.y + 7, 70, 87)
 
-    def move_item(self, s):
-        self.x -= 2
-        self.update_rect()
-        # pygame.draw.rect(s, (255, 0, 0), self.rect, 2)
-        s.blit(self.img, (self.x, self.y))
-        if self.x < 0:
-            return True
+    def move_item(self, s, b):
+        if self.collected is False:
+            self.x -= 2
+            self.update_rect()
+            # pygame.draw.rect(s, (255, 0, 0), self.rect, 2)
+            s.blit(self.img, (self.x, self.y))
+            if self.x < 50:
+                return True
+        if self.collected:
+            if self.dropped is False:
+                self.x, self.y = b.x, b.y + 60
+                self.update_rect()
+                s.blit(self.img, (self.x, self.y))
+            else:
+                # b.slot = False
+                self.y += 10
+                self.update_rect()
+                s.blit(self.img, (self.x, self.y))
 
 
 class Birb:
@@ -75,7 +89,8 @@ class Birb:
         self.img = pygame.image.load('Assets/birb.png').convert_alpha()
         self.x = 50
         self.y = 300
-        self.vel = 5
+        self.vel = 10
+        self.slot = False
         self.rect = pygame.Rect(self.x, self.y, 100, 100)
         self.bullets = []
         self.score = 0
@@ -103,7 +118,7 @@ class Birb:
                 self.bullets.remove(b)
                 return True
 
-    def crash_detection(self, item):
+    def crash_detection(self, item, b):
         if self.rect.colliderect(item.rect):
             return True
 
@@ -130,7 +145,7 @@ birb = Birb()
 
 i = 0
 running = True
-test_rect = pygame.Rect(600, 400, 200, 200)
+test_rect = pygame.Rect(675, 475, 140, 50)
 enemies = [Enemy() for _ in range(30)]
 eggs = [Power() for _ in range(6)]
 
@@ -141,58 +156,55 @@ while running:
     screen.blit(bg, (i, 0))
     screen.blit(bg, (900 + i, 0))
     i -= 2
+    test_rect.x -= 2
     if i == -900:
         screen.blit(bg, (900 + i, 0))
         i = 0
+        test_rect.x = 675
+        test_rect.y = 475
+    pygame.draw.rect(screen, (255, 0, 0), test_rect, 2)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 birb.shoot_bullets()
-    for e in enemies[:]:
-        result = e.move_item(screen)
-        shot_result = birb.collision_detect(e)
-        crash_result = birb.crash_detection(e)
-        if shot_result:
-            try:
-                enemies.remove(e)
-                plink.play()
-            except ValueError:
-                pass
-        if result:
-            enemies.remove(e)
-        if crash_result:
-            try:
-                enemies.remove(e)
-                squawk.play()
-                birb.lives -= 1
-            except ValueError:
-                pass
-    if len(enemies) <= 0:
-        enemies = [Enemy() for _ in range(30)]
+    # for e in enemies[:]:
+    #     result = e.move_item(screen)
+    #     shot_result = birb.collision_detect(e)
+    #     crash_result = birb.crash_detection(e)
+    #     if shot_result:
+    #         try:
+    #             enemies.remove(e)
+    #             plink.play()
+    #         except ValueError:
+    #             pass
+    #     if result:
+    #         enemies.remove(e)
+    #     if crash_result:
+    #         try:
+    #             enemies.remove(e)
+    #             squawk.play()
+    #             birb.lives -= 1
+    #         except ValueError:
+    #             pass
+    # if len(enemies) <= 0:
+    #     enemies = [Enemy() for _ in range(30)]
     for p in eggs[:]:
-        result = p.move_item(screen)
-        crash_result = birb.crash_detection(p)
-        shoot_result = birb.collision_detect(p)
-        if result:
-            try:
-                eggs.remove(p)
-            except ValueError:
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_m]:
+            if birb.slot is False:
                 pass
+            else:
+                p.dropped = True
+                birb.slot = False
+        crash_result = birb.crash_detection(p, birb)
         if crash_result:
-            try:
-                birb.score += 1
-                chirp.play()
-                eggs.remove(p)
-            except ValueError:
-                pass
-        if shoot_result:
-            try:
-                crack.play()
-                eggs.remove(p)
-            except ValueError:
-                pass
+            if birb.slot is False:
+                p.collected = True
+                birb.slot = True
+        print(birb.slot)
+        p.move_item(screen, birb)
     if len(eggs) <= 0:
         eggs = [Power() for _ in range(6)]
     birb.move_bullets(screen)
