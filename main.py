@@ -38,7 +38,7 @@ class Enemy:
         self.rect = pygame.Rect(self.x, self.y + 20, 100, 60)
         self.friendly = False
 
-    def move_item(self, s):
+    def move_item(self, s, b):
         self.x -= self.vel
         self.update_rect()
         # pygame.draw.rect(s, (255, 0, 0), self.rect, 2)
@@ -63,13 +63,19 @@ class Power(Enemy):
     def update_rect(self):
         self.rect = pygame.Rect(self.x + 15, self.y + 7, 70, 87)
 
-    def move_item(self, s):
-        self.x -= 2
-        self.update_rect()
-        # pygame.draw.rect(s, (255, 0, 0), self.rect, 2)
-        s.blit(self.img, (self.x, self.y))
-        if self.x < 50:
-            return True
+    def move_item(self, s, b):
+        if self.collected is False:
+            self.x -= 2
+            self.update_rect()
+            # pygame.draw.rect(s, (255, 0, 0), self.rect, 2)
+            s.blit(self.img, (self.x, self.y))
+            if self.x < 50:
+                return True
+        else:
+            self.x, self.y = b.x, b.y + 60
+            b.slot = True
+            self.update_rect()
+            s.blit(self.img, (self.x, self.y))
 
 
 class Birb:
@@ -78,6 +84,7 @@ class Birb:
         self.x = 50
         self.y = 300
         self.vel = 10
+        self.slot = False
         self.rect = pygame.Rect(self.x, self.y, 100, 100)
         self.bullets = []
         self.score = 0
@@ -178,7 +185,7 @@ while running:
     # if len(enemies) <= 0:
     #     enemies = [Enemy() for _ in range(30)]
     for p in eggs[:]:
-        result = p.move_item(screen)
+        result = p.move_item(screen, birb)
         crash_result = birb.crash_detection(p)
         shoot_result = birb.collision_detect(p)
         if result:
@@ -188,9 +195,15 @@ while running:
                 pass
         if crash_result:
             try:
-                birb.score += 1
-                chirp.play()
-                eggs.remove(p)
+                if p.collected is True:
+                    p.move_item(screen, birb)
+                    p.update_rect()
+                else:
+                    if birb.slot is False:
+                        chirp.play()
+                        p.collected = True
+                    else:
+                        pass
             except ValueError:
                 pass
         if shoot_result:
