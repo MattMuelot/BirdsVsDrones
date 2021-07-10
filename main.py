@@ -54,6 +54,7 @@ class Power(Enemy):
     def __init__(self):
         super().__init__()
         self.x = random.randint(1000, 3000)
+        self.y = random.randint(0, 400)
         self.vel = -2
         self.collected = False
         self.rect = pygame.Rect(self.x + 15, self.y + 7, 70, 87)
@@ -67,7 +68,7 @@ class Power(Enemy):
         self.update_rect()
         # pygame.draw.rect(s, (255, 0, 0), self.rect, 2)
         s.blit(self.img, (self.x, self.y))
-        if self.x < 0:
+        if self.x < 50:
             return True
 
 
