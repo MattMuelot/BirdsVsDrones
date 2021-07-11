@@ -93,34 +93,35 @@ class Egg(Enemy):
     def move_item(self, s, b):
         """This method is a work in progress, do not change anything without approval"""
         if not self.dropped:
-            if not self.collected:
+            if not self.collected:  # If egg has not been collected by player yet
                 self.x -= 2
                 self.update_rect()
                 # pygame.draw.rect(s, (255, 0, 0), self.rect, 2)  # Uncomment to view hit-box
                 s.blit(self.img, (self.x, self.y))
                 if self.x < -100:
-                    return True
-            if self.collected:
+                    return True  # Returns true if x of egg is off screen
+            if self.collected:  # If the egg is collected by player, it binds x and y to directly under birb
                 self.x = b.x
                 self.y = b.y + 65
                 self.update_rect()
                 s.blit(self.img, (self.x, self.y))
-        if self.dropped:
+        if self.dropped:  # If the player hits "m" key, and egg has been dropped, it "falls" down by y += 10
             self.y += 10
             self.update_rect()
             s.blit(self.img, (self.x, self.y))
             if self.y > 800:
-                return True
+                return True  # Returns true if off screen on the y axis
 
 
 class Nest:
-
+    """Nest object. This object is what the egg needs to collide with to score points"""
     def __init__(self):
         self.x = 675
         self.y = 475
         self.rect = pygame.Rect(self.x + 20, self.y + 30, 100, 5)
 
     def move(self, s):
+        """Moves nest x -2 to keep pace with background, giving illusion of staying still"""
         self.x -= 2
         self.rect = pygame.Rect(self.x + 20, self.y + 30, 100, 5)
 
@@ -208,7 +209,7 @@ i = 0  # This variable is used to move the screen and get that "scrolling" effec
 running = True
 enemies = [Enemy() for _ in range(30)]  # Create a list of enemies
 eggs = [Egg() for _ in range(6)]  # Create a list of eggs
-nest = Nest()
+nest = Nest()  # Create nest object
 while running:
     clock = pygame.time.Clock()
     clock.tick(120)  # FPS Set to 120
