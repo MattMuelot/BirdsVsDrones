@@ -224,7 +224,7 @@ class Birb:
                 self.update_rect()
 
     def print_score_lives(self, screen):
-        """Grabs score and adds it to screen"""
+        """Grabs score and lives adds it to screen"""
         score = str(self.score)
         lives = str(self.lives)
         score_surf = font.render(f'Score: {score}', True, BLACK)
@@ -256,6 +256,7 @@ while running:
         i = 0
         nest.x = 675
         nest.y = 475
+    print(birb.carrying_egg)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -303,7 +304,11 @@ while running:
             birb.score -= 5
         off_screen = e.move_item(screen, birb)
         if off_screen:
-            eggs.remove(e)
+            if e.dropped:
+                birb.carrying_egg = False
+                eggs.remove(e)
+            else:
+                eggs.remove(e)
         keys = pygame.key.get_pressed()
         if keys[pygame.K_m]:
             if e.collected:
