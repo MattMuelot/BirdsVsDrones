@@ -93,36 +93,37 @@ class Egg(Enemy):
     def move_item(self, s, b):
         """This method is a work in progress, do not change anything without approval"""
         if not self.dropped:
-            if not self.collected:
+            if not self.collected:  # If egg has not been collected by player yet
                 self.x -= 2
                 self.update_rect()
                 # pygame.draw.rect(s, (255, 0, 0), self.rect, 2)  # Uncomment to view hit-box
                 s.blit(self.img, (self.x, self.y))
                 if self.x < -100:
-                    return True
-            if self.collected:
+                    return True  # Returns true if x of egg is off screen
+            if self.collected:  # If the egg is collected by player, it binds x and y to directly under birb
                 self.x = b.x
                 self.y = b.y + 65
                 self.update_rect()
                 s.blit(self.img, (self.x, self.y))
-        if self.dropped:
+        if self.dropped:  # If the player hits "m" key, and egg has been dropped, it "falls" down by y += 10
             self.y += 10
             self.update_rect()
             s.blit(self.img, (self.x, self.y))
             if self.y > 800:
-                return True
+                return True  # Returns true if off screen on the y axis
 
 
-class Basket:
+class Nest:
+    """Nest object. This object is what the egg needs to collide with to score points"""
     def __init__(self):
         self.x = 675
         self.y = 475
-        self.rect = pygame.Rect(self.x, self.y, 140, 50)
+        self.rect = pygame.Rect(self.x + 20, self.y + 30, 100, 5)
 
     def move(self, s):
+        """Moves nest x -2 to keep pace with background, giving illusion of staying still"""
         self.x -= 2
-        self.rect = pygame.Rect(self.x, self.y, 140, 50)
-        pygame.draw.rect(s, (255, 0, 0), self.rect, 2)
+        self.rect = pygame.Rect(self.x + 20, self.y + 30, 100, 5)
 
 
 class Birb:
@@ -208,7 +209,7 @@ i = 0  # This variable is used to move the screen and get that "scrolling" effec
 running = True
 enemies = [Enemy() for _ in range(30)]  # Create a list of enemies
 eggs = [Egg() for _ in range(6)]  # Create a list of eggs
-basket = Basket()
+nest = Nest()  # Create nest object
 while running:
     clock = pygame.time.Clock()
     clock.tick(120)  # FPS Set to 120
@@ -219,8 +220,8 @@ while running:
     if i == -900:  # If the i value goes less than -900 (which is the width of the screen) it draws a new background
         screen.blit(bg, (900 + i, 0))
         i = 0
-        basket.x = 675
-        basket.y = 475
+        nest.x = 675
+        nest.y = 475
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -274,14 +275,14 @@ while running:
                 e.collected = False
                 birb.carrying_egg = False
         if e.dropped:
-            if e.rect.colliderect(basket.rect):
+            if e.rect.colliderect(nest.rect):
                 print('basket collision')
                 eggs.remove(e)
     if len(eggs) <= 1:  # If all eggs are either destroyed, or off-screen, regenerate list of eggs
         new_eggs = [Egg() for _ in range(6)]
         for n in new_eggs:
             eggs.append(n)
-    basket.move(screen)
+    nest.move(screen)
     birb.move_bullets(screen)
     birb.draw_birb(screen)
     birb.move_birb()
