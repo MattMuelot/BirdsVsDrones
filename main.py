@@ -36,9 +36,9 @@ squawk = pygame.mixer.Sound('Assets/squawk.ogg')
 crack = pygame.mixer.Sound('Assets/crack.ogg')
 chirp = pygame.mixer.Sound('Assets/chirp.ogg')
 
-# ---------------------------------------font ----------------------------------------#
+# ---------------------------------------Font----------------------------------------#
 
-font = pygame.font.SysFont("Mono", 18)
+font = pygame.font.SysFont("Mono", 40)
 
 # ---------------------------------------CLASSES--------------------------------------------------- #
 """PLEASE NOTE: Egg class inherits from Enemy class, mostly for item movement"""
@@ -223,11 +223,14 @@ class Birb:
                 self.y += self.vel
                 self.update_rect()
 
-    def print_score(self, screen):
+    def print_score_lives(self, screen):
         """Grabs score and adds it to screen"""
         score = str(self.score)
-        score_surf = font.render(score, True, BLACK)
+        lives = str(self.lives)
+        score_surf = font.render(f'Score: {score}', True, BLACK)
+        lives_surf = font.render(f'Lives: {lives}', True, BLACK)
         screen.blit(score_surf, (10, 10))
+        screen.blit(lives_surf, (700, 10))
 
 
 # --------------------------------- MAIN GAME LOOP and OBJECT INSTANCE CREATION ------------------------ #
@@ -276,6 +279,8 @@ while running:
                 enemies.remove(e)
                 squawk.play()
                 birb.lives -= 1
+                if birb.lives <= 0:
+                    running = False
             except ValueError:
                 pass
     if len(enemies) <= 0:
@@ -295,6 +300,7 @@ while running:
         if shot_result:
             eggs.remove(e)
             crack.play()
+            birb.score -= 5
         off_screen = e.move_item(screen, birb)
         if off_screen:
             eggs.remove(e)
@@ -310,6 +316,7 @@ while running:
                 print('basket collision')
                 eggs.remove(e)
                 birb.score += 5
+                chirp.play()
     if len(eggs) <= 1:  # If all eggs are either destroyed, or off-screen, regenerate list of eggs
         new_eggs = [Egg() for _ in range(6)]
         for n in new_eggs:
@@ -318,5 +325,5 @@ while running:
     birb.move_bullets(screen)
     birb.draw_birb(screen)
     birb.move_birb()
-    birb.print_score(screen)
+    birb.print_score_lives(screen)
     pygame.display.update()
