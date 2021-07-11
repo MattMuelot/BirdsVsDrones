@@ -29,8 +29,8 @@ seed = pygame.image.load('Assets/seed.png').convert_alpha()
 
 pygame.mixer.init()
 pygame.mixer.set_num_channels(16)
-# pygame.mixer.music.load('Assets/gametheme.mp3')
-# pygame.mixer.music.play(-1)
+pygame.mixer.music.load('Assets/gametheme.ogg')
+pygame.mixer.music.play(-1)
 plink = pygame.mixer.Sound('Assets/plink.ogg')
 squawk = pygame.mixer.Sound('Assets/squawk.ogg')
 crack = pygame.mixer.Sound('Assets/crack.ogg')
@@ -223,11 +223,11 @@ class Birb:
                 self.y += self.vel
                 self.update_rect()
 
-
-def print_score(screen, score):
-    score = str(score)
-    score_surf = font.render(score, True, BLACK)
-    screen.blit(score_surf, (10, 10))
+    def print_score(self, screen):
+        """Grabs score and adds it to screen"""
+        score = str(self.score)
+        score_surf = font.render(score, True, BLACK)
+        screen.blit(score_surf, (10, 10))
 
 
 # --------------------------------- MAIN GAME LOOP and OBJECT INSTANCE CREATION ------------------------ #
@@ -235,7 +235,6 @@ def print_score(screen, score):
 birb = Birb()  # Create our birb object
 
 i = 0  # This variable is used to move the screen and get that "scrolling" effect
-score = 0
 
 running = True
 enemies = [Enemy() for _ in range(30)]  # Create a list of enemies
@@ -310,7 +309,7 @@ while running:
             if e.rect.colliderect(nest.rect):
                 print('basket collision')
                 eggs.remove(e)
-                score += 5
+                birb.score += 5
     if len(eggs) <= 1:  # If all eggs are either destroyed, or off-screen, regenerate list of eggs
         new_eggs = [Egg() for _ in range(6)]
         for n in new_eggs:
@@ -319,5 +318,5 @@ while running:
     birb.move_bullets(screen)
     birb.draw_birb(screen)
     birb.move_birb()
-    print_score(screen, score)
+    birb.print_score(screen)
     pygame.display.update()
