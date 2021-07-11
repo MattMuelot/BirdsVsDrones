@@ -81,6 +81,7 @@ class Egg(Enemy):
         self.x = random.randint(1000, 3000)
         self.y = random.randint(0, 400)
         self.vel = -2
+        self.collected = False
         self.rect = pygame.Rect(self.x + 15, self.y + 7, 70, 87)  # Manually edited hit-box to be as perfect as possible
         self.img = pygame.image.load('Assets/egg.png').convert_alpha()
 
@@ -90,12 +91,18 @@ class Egg(Enemy):
 
     def move_item(self, s, b):
         """This method is a work in progress, do not change anything without approval"""
-        self.x -= 2
-        self.update_rect()
-        # pygame.draw.rect(s, (255, 0, 0), self.rect, 2)  # Uncomment to view hit-box
-        s.blit(self.img, (self.x, self.y))
-        if self.x < -100:
-            return True
+        if not self.collected:
+            self.x -= 2
+            self.update_rect()
+            # pygame.draw.rect(s, (255, 0, 0), self.rect, 2)  # Uncomment to view hit-box
+            s.blit(self.img, (self.x, self.y))
+            if self.x < -100:
+                return True
+        if self.collected:
+            self.x = b.x
+            self.y = b.y + 65
+            self.update_rect()
+            s.blit(self.img, (self.x, self.y))
 
 
 class Birb:
@@ -107,6 +114,7 @@ class Birb:
         self.vel = 10
         self.rect = pygame.Rect(self.x, self.y, 100, 100)
         self.bullets = []
+        self.carrying_egg = False
         self.score = 0
         self.lives = 5
         self.friendly = True
@@ -224,10 +232,17 @@ while running:
     if len(enemies) <= 0:
         enemies = [Enemy() for _ in range(30)]
     for e in eggs[:]:
-        crash_result = birb.crash_detection(e, birb)  # Checks to see if our birb is colliding with the egg
-        if crash_result:
-            eggs.remove(e)
-            chirp.play()
+        if e.collected:
+            pass
+        else:
+            crash_result = birb.crash_detection(e, birb)  # Checks to see if our birb is colliding with the egg
+            if crash_result:
+                if birb.carrying_egg is True:
+                    pass
+                else:
+                    e.collected = True
+                    birb.carrying_egg = True
+                    print('Egg picked')
         shot_result = birb.bullet_detect(e)
         if shot_result:
             eggs.remove(e)
@@ -235,8 +250,10 @@ while running:
         off_screen = e.move_item(screen, birb)
         if off_screen:
             eggs.remove(e)
-    if len(eggs) <= 0:  # If all eggs are either destroyed, or off-screen, regenerate list of eggs
-        eggs = [Egg() for _ in range(6)]
+    if len(eggs) <= 1:  # If all eggs are either destroyed, or off-screen, regenerate list of eggs
+        new_eggs = [Egg() for _ in range(6)]
+        for n in new_eggs:
+            eggs.append(n)
     birb.move_bullets(screen)
     birb.draw_birb(screen)
     birb.move_birb()
