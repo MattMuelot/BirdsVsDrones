@@ -82,6 +82,7 @@ class Egg(Enemy):
         self.y = random.randint(0, 400)
         self.vel = -2
         self.collected = False
+        self.dropped = False
         self.rect = pygame.Rect(self.x + 15, self.y + 7, 70, 87)  # Manually edited hit-box to be as perfect as possible
         self.img = pygame.image.load('Assets/egg.png').convert_alpha()
 
@@ -91,18 +92,37 @@ class Egg(Enemy):
 
     def move_item(self, s, b):
         """This method is a work in progress, do not change anything without approval"""
-        if not self.collected:
-            self.x -= 2
+        if not self.dropped:
+            if not self.collected:
+                self.x -= 2
+                self.update_rect()
+                # pygame.draw.rect(s, (255, 0, 0), self.rect, 2)  # Uncomment to view hit-box
+                s.blit(self.img, (self.x, self.y))
+                if self.x < -100:
+                    return True
+            if self.collected:
+                self.x = b.x
+                self.y = b.y + 65
+                self.update_rect()
+                s.blit(self.img, (self.x, self.y))
+        if self.dropped:
+            self.y += 10
             self.update_rect()
-            # pygame.draw.rect(s, (255, 0, 0), self.rect, 2)  # Uncomment to view hit-box
             s.blit(self.img, (self.x, self.y))
-            if self.x < -100:
+            if self.y > 800:
                 return True
-        if self.collected:
-            self.x = b.x
-            self.y = b.y + 65
-            self.update_rect()
-            s.blit(self.img, (self.x, self.y))
+
+
+class Basket:
+    def __init__(self):
+        self.x = 675
+        self.y = 475
+        self.rect = pygame.Rect(self.x, self.y, 140, 50)
+
+    def move(self, s):
+        self.x -= 2
+        self.rect = pygame.Rect(self.x, self.y, 140, 50)
+        pygame.draw.rect(s, (255, 0, 0), self.rect, 2)
 
 
 class Birb:
@@ -186,10 +206,9 @@ birb = Birb()  # Create our birb object
 i = 0  # This variable is used to move the screen and get that "scrolling" effect
 
 running = True
-test_rect = pygame.Rect(675, 475, 140, 50)  # This is a test rect that will eventually be used for egg baskets
 enemies = [Enemy() for _ in range(30)]  # Create a list of enemies
 eggs = [Egg() for _ in range(6)]  # Create a list of eggs
-
+basket = Basket()
 while running:
     clock = pygame.time.Clock()
     clock.tick(120)  # FPS Set to 120
@@ -197,13 +216,11 @@ while running:
     screen.blit(bg, (i, 0))
     screen.blit(bg, (900 + i, 0))
     i -= 2  # For every time loop is run, our background image x co-ordinate moves -2
-    test_rect.x -= 2  # Our test rect also moves x -2 to keep pace with background, for illusion of staying still
     if i == -900:  # If the i value goes less than -900 (which is the width of the screen) it draws a new background
         screen.blit(bg, (900 + i, 0))
         i = 0
-        test_rect.x = 675
-        test_rect.y = 475
-    pygame.draw.rect(screen, (255, 0, 0), test_rect, 2)  # This just draws our test rect to the screen
+        basket.x = 675
+        basket.y = 475
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -242,7 +259,6 @@ while running:
                 else:
                     e.collected = True
                     birb.carrying_egg = True
-                    print('Egg picked')
         shot_result = birb.bullet_detect(e)
         if shot_result:
             eggs.remove(e)
@@ -250,10 +266,22 @@ while running:
         off_screen = e.move_item(screen, birb)
         if off_screen:
             eggs.remove(e)
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_m]:
+            if e.collected:
+                e.dropped = True
+                print('dropper')
+                e.collected = False
+                birb.carrying_egg = False
+        if e.dropped:
+            if e.rect.colliderect(basket.rect):
+                print('basket collision')
+                eggs.remove(e)
     if len(eggs) <= 1:  # If all eggs are either destroyed, or off-screen, regenerate list of eggs
         new_eggs = [Egg() for _ in range(6)]
         for n in new_eggs:
             eggs.append(n)
+    basket.move(screen)
     birb.move_bullets(screen)
     birb.draw_birb(screen)
     birb.move_birb()
