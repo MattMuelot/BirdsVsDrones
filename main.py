@@ -113,16 +113,16 @@ class Egg(Enemy):
                 return True
 
 
-class Basket:
+class Nest:
+
     def __init__(self):
         self.x = 675
         self.y = 475
-        self.rect = pygame.Rect(self.x, self.y, 140, 50)
+        self.rect = pygame.Rect(self.x + 20, self.y + 30, 100, 5)
 
     def move(self, s):
         self.x -= 2
-        self.rect = pygame.Rect(self.x, self.y, 140, 50)
-        pygame.draw.rect(s, (255, 0, 0), self.rect, 2)
+        self.rect = pygame.Rect(self.x + 20, self.y + 30, 100, 5)
 
 
 class Birb:
@@ -208,7 +208,7 @@ i = 0  # This variable is used to move the screen and get that "scrolling" effec
 running = True
 enemies = [Enemy() for _ in range(30)]  # Create a list of enemies
 eggs = [Egg() for _ in range(6)]  # Create a list of eggs
-basket = Basket()
+nest = Nest()
 while running:
     clock = pygame.time.Clock()
     clock.tick(120)  # FPS Set to 120
@@ -219,8 +219,8 @@ while running:
     if i == -900:  # If the i value goes less than -900 (which is the width of the screen) it draws a new background
         screen.blit(bg, (900 + i, 0))
         i = 0
-        basket.x = 675
-        basket.y = 475
+        nest.x = 675
+        nest.y = 475
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -274,14 +274,14 @@ while running:
                 e.collected = False
                 birb.carrying_egg = False
         if e.dropped:
-            if e.rect.colliderect(basket.rect):
+            if e.rect.colliderect(nest.rect):
                 print('basket collision')
                 eggs.remove(e)
     if len(eggs) <= 1:  # If all eggs are either destroyed, or off-screen, regenerate list of eggs
         new_eggs = [Egg() for _ in range(6)]
         for n in new_eggs:
             eggs.append(n)
-    basket.move(screen)
+    nest.move(screen)
     birb.move_bullets(screen)
     birb.draw_birb(screen)
     birb.move_birb()
