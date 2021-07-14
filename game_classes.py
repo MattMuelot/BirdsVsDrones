@@ -40,7 +40,6 @@ class Enemy:
 		has no actual use in the Enemy class, but is used in the Egg class, so its here for inheritance"""
 		self.x -= self.vel
 		self.update_rect()
-		# pygame.draw.rect(s, (255, 0, 0), self.rect, 2) # Un-comment for hit-box viewing
 		if self.x < -100:
 			return True
 
@@ -49,6 +48,7 @@ class Enemy:
 		self.rect = pygame.Rect(self.x, self.y + 20, 100, 60)
 
 	def draw(self, screen):
+		pygame.draw.rect(screen, (255, 0, 0), self.rect, 2) # Un-comment for hit-box viewing
 		screen.blit(self.img, (self.x, self.y))
 		
 
@@ -112,7 +112,6 @@ class Birb:
 
 	def __init__(self):
 		self.img = pygame.image.load('Assets/birb.png').convert_alpha()
-		self.seed = pygame.image.load('Assets/seed.png').convert_alpha()
 		self.x = 50
 		self.y = 300
 		self.vel = 10
@@ -132,7 +131,7 @@ class Birb:
 	def draw_birb(self, s):
 		"""Draws our birb object to screen using img attribute"""
 		s.blit(self.img, (self.x, self.y))
-		# pygame.draw.rect(s, (255, 0, 0), self.rect, 2)  # Uncomment to show hit-box
+		pygame.draw.rect(s, (255, 0, 0), self.rect, 2)  # Uncomment to show hit-box
 
 	def shoot_bullets(self):
 		"""Creates a bullet object and appends that object to our bullets list"""
@@ -143,8 +142,8 @@ class Birb:
 		"""Iterates through list of bullets and moves them, draws them to the screen, then removes them if
 		they go off-screen"""
 		for b in self.bullets:
-			b.x += 20
-			if b.x > 890:
+			b.rect.x += 20
+			if b.rect.x > 890:
 				self.bullets.remove(b)
 
 	def bullet_detect(self, item):
