@@ -4,7 +4,7 @@ create a pull request if you see anything that can be changed that you think wou
 
 import pygame
 from pygame.locals import *
-from game_classes import *
+from sprites import *
 import random, sys
 
 from os import path
@@ -45,9 +45,18 @@ class Game(object):
 
 
 	def new(self):
-		self.enemies = [Enemy() for _ in range(30)]  # Create a list of enemies
-		self.eggs = [Egg() for _ in range(6)]  # Create a list of eggs
-		self.birb = Birb()
+		self.all_sprites = pygame.sprite.Group()
+		self.enemies = pygame.sprite.Group()
+		self.eggs = pygame.sprite.Group()
+		self.bullets = pygame.sprite.Group()
+		
+		for _ in range(30):
+			Enemy(self)
+		
+		for _ in range(6):
+			Egg(self)
+	
+		self.birb = Birb(self)
 		self.nest = Nest()  # Create nest object
 
 		self.screen_offset = 0
@@ -68,85 +77,61 @@ class Game(object):
 				self.running = False
 			if event.type == pygame.KEYDOWN:
 				if event.key == pygame.K_SPACE:
-					self.birb.shoot_bullets()
+					self.shoot_bullets()
 		
 				if event.key == pygame.K_m:
 					if self.birb.carrying_egg:
+						self.birb.carrying_egg = False
+					
 						for e in self.eggs:
 							if e.collected:
 								e.dropped = True
-								print('dropper')
 								e.collected = False
-								self.birb.carrying_egg = False
 								break
 
 	def update(self):
-		self.nest.move(self.screen)
-		self.birb.move_bullets(self.screen)
-		self.birb.move_birb()
-	
-		for e in self.enemies:
-			result = e.move_item(self.screen, self.birb)
-			shot_result = self.birb.bullet_detect(e)
-			crash_result = self.birb.crash_detection(e, self.birb)
+		self.all_sprites.update()	
 		
-			if shot_result:
-				try:
-					self.enemies.remove(e)
-					self.plink.play()
-				except ValueError:
-					pass
-			if result:
-				self.enemies.remove(e)
-		
-			if crash_result:
-				try:
-					self.enemies.remove(e)
-					self.squawk.play()
-					self.birb.lives -= 1
-					if self.birb.lives <= 0:
-						self.running = False
-				except ValueError:
-					pass
-		
-		if len(self.enemies) <= 0:
-			self.enemies = [Enemy() for _ in range(30)]
-	
-		for e in self.eggs:
-			if e.collected:
-				pass
-			else:
-				crash_result = self.birb.crash_detection(e, self.birb)  # Checks to see if our birb is colliding with the egg
-				if crash_result:
-					if not self.birb.carrying_egg:
-						e.collected = True
-						self.birb.carrying_egg = True
+		for bullet_hit in pygame.sprite.groupcollide(self.bullets, self.enemies, True, True):
+			self.plink.play()
+			self.birb.score += 2
 			
-			shot_result = self.birb.bullet_detect(e)
-			if shot_result:
-				self.eggs.remove(e)
-				self.crack.play()
-				self.birb.score -= 5
+		enemy_hits = pygame.sprite.spritecollide(self.birb, self.enemies, True, pygame.sprite.collide_mask)
+		if enemy_hits:
+			self.squawk.play()
+			self.birb.lives -= 1
+			if self.birb.lives <= 0:
+				self.running = False
+		
+			Enemy(self)
+		
+		egg_hit = pygame.sprite.spritecollide(self.birb, self.eggs, False, pygame.sprite.collide_mask)
+		if egg_hit:
+			if not self.birb.carrying_egg:
+				egg_hit[0].collected = True
+				self.birb.carrying_egg = True
+				self.birb.egg = egg_hit[0]
+				
+		for egg_hit2 in pygame.sprite.groupcollide(self.bullets, self.eggs, True, True, pygame.sprite.collide_mask):
+			self.crack.play()
+			self.birb.score -= 5
 			
-			off_screen = e.move_item(self.screen, self.birb)
-			if off_screen:
-				if e.dropped:
-					self.birb.carrying_egg = False
-					self.eggs.remove(e)
-				else:
-					self.eggs.remove(e)
-		  
-			if e.dropped:
-				if e.rect.colliderect(self.nest.rect):
+		if self.birb.egg is not None:
+			if self.birb.egg.dropped:		  
+				if self.birb.egg.rect.colliderect(self.nest.rect):
 					print('basket collision')
-					self.eggs.remove(e)
+					self.birb.egg.kill()
 					self.birb.score += 5
 					self.chirp.play()
-		
-		if len(self.eggs) == 0:  # If all eggs are either destroyed, or off-screen, regenerate list of eggs
-			self.eggs = [Egg() for _ in range(6)]
+	
+		if len(self.eggs) <= 0:
+			for _ in range(6):
+				Egg(self)
+			
+	def shoot_bullets(self):
+		"""Creates a bullet object and appends that object to our bullets list"""
+		bullet = Bullet(self.birb.rect.x + 75, self.birb.rect.y + 35, self)
 
-  							
 	def draw(self):
 		self.screen.fill((0, 0, 222))
 		self.screen.blit(self.bg, (self.screen_offset, 0))
@@ -160,19 +145,8 @@ class Game(object):
 			self.nest.y = 475
 
 		
-		self.birb.draw_birb(self.screen)
-		
-		for e in self.enemies:
-			e.draw(self.screen)
-		
-		for e in self.eggs:
-			e.draw(self.screen)
-			
-		for b in self.birb.bullets:
-			b.draw(self.screen)
-			
+		self.all_sprites.draw(self.screen)	
 		self.birb.print_score_lives(self.screen)
-		
 		pygame.display.update()
 
 	def show_start_screen(self):
