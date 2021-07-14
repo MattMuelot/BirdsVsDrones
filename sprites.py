@@ -2,8 +2,6 @@ import pygame
 import random
 
 # ---------------------------------------CLASSES--------------------------------------------------- #
-"""PLEASE NOTE: Egg class inherits from Enemy class, mostly for item movement"""
-
 
 class Bullet(pygame.sprite.Sprite):
 	"""Creates bullet object"""
@@ -86,15 +84,14 @@ class Egg(pygame.sprite.Sprite):
 
 class Nest:
 	"""Nest object. This object is what the egg needs to collide with to score points"""
-	def __init__(self):
-		self.x = 675
-		self.y = 475
+	def __init__(self, x, y):
+		self.x = x
+		self.y = y
 		self.rect = pygame.Rect(self.x + 20, self.y + 30, 100, 5)
 
-	def move(self, s):
+	def move(self):
 		"""Moves nest x -2 to keep pace with background, giving illusion of staying still"""
-		self.x -= 2
-		self.rect = pygame.Rect(self.x + 20, self.y + 30, 100, 5)
+		self.rect.x -= 2
 
 class Birb(pygame.sprite.Sprite):
 	"""Our main player (birb) class"""
@@ -113,7 +110,9 @@ class Birb(pygame.sprite.Sprite):
 		self.score = 0
 		self.lives = 5
 		self.friendly = True
-		self.BLACK = (0, 0, 0)
+		self.reloading = 0
+		
+		self.BLACK = (0,0,0)
 		self.font = pygame.font.SysFont("Mono", 40)
 		self.UP_KEYS = [pygame.K_w, pygame.K_UP]
 		self.DOWN_KEYS = [pygame.K_s, pygame.K_DOWN]

@@ -50,6 +50,8 @@ class Game(object):
 		self.eggs = pygame.sprite.Group()
 		self.bullets = pygame.sprite.Group()
 		
+		self.nests = []
+		
 		for _ in range(30):
 			Enemy(self)
 		
@@ -57,7 +59,14 @@ class Game(object):
 			Egg(self)
 	
 		self.birb = Birb(self)
-		self.nest = Nest()  # Create nest object
+		
+		nest_x = 675
+		nest_y = 475
+		
+		for _ in range(2):
+			nest = Nest(nest_x, nest_y)  # Create nest object
+			self.nests.append(nest)
+			nest_x += 900
 
 		self.screen_offset = 0
 		#pygame.mixer.music.play(-1)
@@ -70,27 +79,31 @@ class Game(object):
 			self.events()
 			self.update()
 			self.draw()
+			self.scroll()
 					
 	def events(self):
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				self.running = False
+			
 			if event.type == pygame.KEYDOWN:
-				if event.key == pygame.K_SPACE:
-					self.shoot_bullets()
-		
-				if event.key == pygame.K_m:
-					if self.birb.carrying_egg:
-						self.birb.carrying_egg = False
-					
-						for e in self.eggs:
-							if e.collected:
-								e.dropped = True
-								e.collected = False
-								break
+				if event.key == pygame.K_m or event.mod == KMOD_LALT:
+					if self.birb.egg:
+						self.birb.egg.dropped = True
+						self.birb.egg.collected = False
+						self.birb.egg = None
+	
+		keystate = pygame.key.get_pressed()
+		firing = keystate[K_SPACE]
+		 
+		if not self.birb.reloading and firing:
+			self.shoot_bullets()
+		self.birb.reloading = firing
 
 	def update(self):
 		self.all_sprites.update()	
+		for nest in self.nests:
+			nest.move()
 		
 		for bullet_hit in pygame.sprite.groupcollide(self.bullets, self.enemies, True, True):
 			self.plink.play()
@@ -107,7 +120,7 @@ class Game(object):
 		
 		egg_hit = pygame.sprite.spritecollide(self.birb, self.eggs, False, pygame.sprite.collide_mask)
 		if egg_hit:
-			if not self.birb.carrying_egg:
+			if not self.birb.egg:
 				egg_hit[0].collected = True
 				self.birb.carrying_egg = True
 				self.birb.egg = egg_hit[0]
@@ -116,34 +129,41 @@ class Game(object):
 			self.crack.play()
 			self.birb.score -= 5
 			
-		if self.birb.egg is not None:
-			if self.birb.egg.dropped:		  
-				if self.birb.egg.rect.colliderect(self.nest.rect):
-					print('basket collision')
-					self.birb.egg.kill()
-					self.birb.score += 5
-					self.chirp.play()
-	
+		for egg in self.eggs:
+			if egg.dropped:		  
+				for nest in self.nests:
+					if egg.rect.colliderect(nest.rect):
+						print('basket collision')
+						egg.kill()
+						self.birb.score += 5
+						self.chirp.play()
+						break
+					
 		if len(self.eggs) <= 0:
 			for _ in range(6):
 				Egg(self)
 			
+		if len(self.enemies) < 30:
+			for _ in range(30 - len(self.enemies)):
+				Enemy(self)
+			
+	
 	def shoot_bullets(self):
 		"""Creates a bullet object and appends that object to our bullets list"""
 		bullet = Bullet(self.birb.rect.x + 75, self.birb.rect.y + 35, self)
 
+	def scroll(self):
+		self.screen_offset -= 2  # For every time loop is run, our background image x co-ordinate moves -2
+		if self.screen_offset == -900:  # If the i value goes less than -900 (which is the width of the screen) it draws a new background
+			self.screen_offset = 0
+			self.nests.pop(0)
+			n = Nest(900 + 675, 475)	
+			self.nests.append(n)
+					
 	def draw(self):
 		self.screen.fill((0, 0, 222))
 		self.screen.blit(self.bg, (self.screen_offset, 0))
 		self.screen.blit(self.bg, (900 + self.screen_offset, 0))
-		self.screen_offset -= 2  # For every time loop is run, our background image x co-ordinate moves -2
-		
-		if self.screen_offset == -900:  # If the i value goes less than -900 (which is the width of the screen) it draws a new background
-			self.screen.blit(self.bg, (900 + self.screen_offset, 0))
-			self.screen_offset = 0
-			self.nest.x = 675
-			self.nest.y = 475
-
 		
 		self.all_sprites.draw(self.screen)	
 		self.birb.print_score_lives(self.screen)
