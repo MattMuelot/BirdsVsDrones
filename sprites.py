@@ -1,6 +1,14 @@
 import pygame
 import random
 
+from math import cos, pi
+
+def easeInOutSine(n):
+	return -0.5 * (cos(pi * n) - 1)
+
+egg_bob_range = 4
+egg_bob_speed = 0.2
+
 # ---------------------------------------CLASSES--------------------------------------------------- #
 
 class Bullet(pygame.sprite.Sprite):
@@ -41,11 +49,10 @@ class Enemy(pygame.sprite.Sprite):
 
 	def update(self):
 		self.rect.x -= self.vel
-		if self.rect.x < -50:
+		if self.rect.right < 0:
 			self.kill()
 
 	def draw(self, screen):
-		pygame.draw.rect(screen, (255, 0, 0), self.rect, 2) # Un-comment for hit-box viewing
 		screen.blit(self.image, self.rect)
 		
 class Egg(pygame.sprite.Sprite):
@@ -61,14 +68,24 @@ class Egg(pygame.sprite.Sprite):
 		self.vel = -2
 		self.collected = False
 		self.dropped = False
+		self.step = 0
+		self.dir = 1
 
 	def update(self):
 		"""This method is a work in progress, do not change anything without approval"""
 		if not self.dropped:
 			if not self.collected:  # If egg has not been collected by player yet
+				offset = egg_bob_range * (easeInOutSine(self.step / egg_bob_range) - 0.5)
+				self.rect.centery = self.rect.centery + offset * self.dir
+				self.step += egg_bob_speed
+				
+				if self.step > egg_bob_range:
+					self.step = 0
+					self.dir *= -1
+
 				self.rect.x -= 2
-				# pygame.draw.rect(s, (255, 0, 0), self.rect, 2)  # Uncomment to view hit-box
-				if self.rect.x < -60:
+
+				if self.rect.right < 0:
 					self.kill()
 					
 			if self.collected:  # If the egg is collected by player, it binds x and y to directly under birb

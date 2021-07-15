@@ -102,10 +102,11 @@ class Game(object):
 
 	def update(self):
 		self.all_sprites.update()	
+		
 		for nest in self.nests:
 			nest.move()
 		
-		for bullet_hit in pygame.sprite.groupcollide(self.bullets, self.enemies, True, True):
+		for bullet_hit in pygame.sprite.groupcollide(self.bullets, self.enemies, True, True, pygame.sprite.collide_mask):
 			self.plink.play()
 			self.birb.score += 2
 			
@@ -150,7 +151,7 @@ class Game(object):
 	
 	def shoot_bullets(self):
 		"""Creates a bullet object and appends that object to our bullets list"""
-		bullet = Bullet(self.birb.rect.x + 75, self.birb.rect.y + 35, self)
+		Bullet(self.birb.rect.x + 75, self.birb.rect.y + 35, self)
 
 	def scroll(self):
 		self.screen_offset -= 2  # For every time loop is run, our background image x co-ordinate moves -2
