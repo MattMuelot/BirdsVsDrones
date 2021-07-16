@@ -9,6 +9,8 @@ def easeInOutSine(n):
 egg_bob_range = 4
 egg_bob_speed = 0.2
 
+RED = (255, 10, 20)
+
 # ---------------------------------------CLASSES--------------------------------------------------- #
 
 class Bullet(pygame.sprite.Sprite):
@@ -42,16 +44,47 @@ class Enemy(pygame.sprite.Sprite):
 		pygame.sprite.Sprite.__init__(self, self.groups)
 		
 		self.image = pygame.image.load('Assets/drone.png').convert_alpha()
+		self.attack_rect = pygame.Rect(10,10,20,20)
 		self.rect = self.image.get_rect()
 		self.rect.x = random.randint(1000, 6000)
 		self.rect.y = random.randint(100, 500)
 		self.vel = 3
-
+		self.homing = False
+		
+	def set_homing(self):
+		self.homing = True
+		pygame.draw.rect(self.image, RED, self.attack_rect)
+		
 	def update(self):
-		self.rect.x -= self.vel
+		if self.homing:
+			self.home_in(self.game.birb)
+		else:
+			self.rect.x -= self.vel
+		
 		if self.rect.right < 0:
+			if self.homing: 
+				self.game.homing_enemies -= 1
+			
 			self.kill()
 
+	def home_in(self, birb):
+		velocity = 5
+		
+		x_dist = birb.rect.centerx - self.rect.centerx
+		y_dist = birb.rect.centery - self.rect.centery
+
+		dist = (x_dist ** 2 + y_dist ** 2) ** .5 + 1 #diagonal distance; adding 1 to avoid divide by 0 later
+
+		x_vel = x_dist / dist * velocity 
+		y_vel = y_dist / dist * velocity
+		
+		#randomly offset x/y velocity by 75%-125%
+		x_vel = x_dist / dist * velocity * (random.randrange(75, 126)/100)
+		y_vel = y_dist / dist * velocity * (random.randrange(75, 126)/100)
+
+		self.rect.x += x_vel
+		self.rect.y += y_vel
+		
 	def draw(self, screen):
 		screen.blit(self.image, self.rect)
 		

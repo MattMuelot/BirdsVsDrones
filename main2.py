@@ -51,10 +51,17 @@ class Game(object):
 		self.bullets = pygame.sprite.Group()
 		
 		self.nests = []
+		self.homing_enemies = 3
 		
 		for _ in range(30):
 			Enemy(self)
 		
+		sample_size = 3
+		sample = random.sample(list(self.enemies), k=sample_size)
+
+		for obj in sample:
+			obj.set_homing() # add the attribute to each object
+
 		for _ in range(6):
 			Egg(self)
 	
@@ -107,6 +114,7 @@ class Game(object):
 			nest.move()
 		
 		for bullet_hit in pygame.sprite.groupcollide(self.bullets, self.enemies, True, True, pygame.sprite.collide_mask):
+			print(bullet_hit)
 			self.plink.play()
 			self.birb.score += 2
 			
