@@ -51,10 +51,17 @@ class Game(object):
 		self.bullets = pygame.sprite.Group()
 		
 		self.nests = []
+		self.homing_enemies = 3
 		
 		for _ in range(30):
 			Enemy(self)
 		
+		sample_size = 3
+		sample = random.sample(list(self.enemies), k=sample_size)
+
+		for obj in sample:
+			obj.set_homing() # add the attribute to each object
+
 		for _ in range(6):
 			Egg(self)
 	
@@ -102,10 +109,12 @@ class Game(object):
 
 	def update(self):
 		self.all_sprites.update()	
+		
 		for nest in self.nests:
 			nest.move()
 		
-		for bullet_hit in pygame.sprite.groupcollide(self.bullets, self.enemies, True, True):
+		for bullet_hit in pygame.sprite.groupcollide(self.bullets, self.enemies, True, True, pygame.sprite.collide_mask):
+			print(bullet_hit)
 			self.plink.play()
 			self.birb.score += 2
 			
@@ -150,7 +159,7 @@ class Game(object):
 	
 	def shoot_bullets(self):
 		"""Creates a bullet object and appends that object to our bullets list"""
-		bullet = Bullet(self.birb.rect.x + 75, self.birb.rect.y + 35, self)
+		Bullet(self.birb.rect.x + 75, self.birb.rect.y + 35, self)
 
 	def scroll(self):
 		self.screen_offset -= 2  # For every time loop is run, our background image x co-ordinate moves -2
